@@ -6,6 +6,7 @@ use std::ptr;
 use std::rt::mutex::NativeMutex;
 use sync::one::{Once, ONCE_INIT};
 
+pub type AES_KEY = c_void;
 pub type ASN1_INTEGER = c_void;
 pub type ASN1_STRING = c_void;
 pub type ASN1_TIME = c_void;
@@ -236,6 +237,11 @@ pub unsafe fn BIO_eof(b: *mut BIO) -> bool {
 
 // True functions
 extern "C" {
+    pub fn AES_set_encrypt_key(userKey: *const u8, bits: c_int, key: *mut AES_KEY) -> c_int;
+    pub fn AES_set_decrypt_key(userKey: *const u8, bits: c_int, key: *mut AES_KEY) -> c_int;
+    pub fn AES_wrap_key(key: *mut AES_KEY, iv: *const u8, out: *mut u8, in_: *const u8, inlen: c_uint) -> c_int;
+    pub fn AES_unwrap_key(key: *mut AES_KEY, iv: *const u8, out: *mut u8, in_: *const u8, inlen: c_uint) -> c_int;
+
     pub fn ASN1_INTEGER_set(dest: *mut ASN1_INTEGER, value: c_long) -> c_int;
     pub fn ASN1_STRING_type_new(ty: c_int) -> *mut ASN1_STRING;
     pub fn ASN1_TIME_free(tm: *mut ASN1_TIME);
