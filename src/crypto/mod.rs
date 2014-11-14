@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+pub mod aes;
 pub mod hash;
 pub mod hmac;
 pub mod pkcs5;
