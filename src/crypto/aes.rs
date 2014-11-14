@@ -25,16 +25,21 @@ pub fn wrap(kek: &[u8], to_wrap: &[u8]) -> Vec<u8> {
     }
 }
 
-pub fn unwrap(kek: &[u8], wrapped: &[u8]) -> Vec<u8> {
+pub fn unwrap(kek: &[u8], wrapped: &[u8]) -> Option<Vec<u8>> {
     unsafe {
-        let mut result = Vec::from_elem(wrapped.len() - 8, 0u8);
+        let unwrapped_len = wrapped.len() - 8;
+        let mut result = Vec::from_elem(unwrapped_len, 0u8);
         let mut aeskey = AesKey::new();
-        ffi::AES_set_decrypt_key(kek.as_ptr(), (kek.len() * 8) as i32,
-                                 ::std::mem::transmute(&mut aeskey));
-        ffi::AES_unwrap_key(::std::mem::transmute(&mut aeskey),
-                            ::std::ptr::null(), result.as_mut_ptr(),
-                            wrapped.as_ptr(), wrapped.len() as u32);
-        result
+        let ret =
+            ffi::AES_set_decrypt_key(kek.as_ptr(), (kek.len() * 8) as i32,
+                                     ::std::mem::transmute(&mut aeskey));
+        if ret != 0 { return None }
+        let ret =
+            ffi::AES_unwrap_key(::std::mem::transmute(&mut aeskey),
+                                ::std::ptr::null(), result.as_mut_ptr(),
+                                wrapped.as_ptr(), wrapped.len() as u32);
+        if ret != unwrapped_len as i32 { return None }
+        Some(result)
     }
 }
 
@@ -55,6 +60,6 @@ fn test_wrap_unwrap() {
          0x98, 0x8B, 0x9B, 0x7A, 0x02, 0xDD, 0x21];
     let wrapped = wrap(kek.as_slice(), to_wrap.as_slice());
     assert_eq!(wrapped.as_slice(), expected.as_slice());
-    let unwrapped = unwrap(kek.as_slice(), wrapped.as_slice());
+    let unwrapped = unwrap(kek.as_slice(), expected.as_slice()).unwrap();
     assert_eq!(unwrapped.as_slice(), to_wrap.as_slice());
 }
